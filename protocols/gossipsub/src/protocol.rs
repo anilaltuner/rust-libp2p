@@ -34,6 +34,7 @@ use libp2p_core::{InboundUpgrade, OutboundUpgrade, UpgradeInfo};
 use libp2p_identity::{PeerId, PublicKey};
 use libp2p_swarm::StreamProtocol;
 use quick_protobuf::Writer;
+use web_time::SystemTime;
 use std::pin::Pin;
 use void::Void;
 
@@ -314,7 +315,7 @@ impl Decoder for GossipsubCodec {
                 continue;
             }
 
-            // ensure the sequence number is a u64
+            // ensure the sequence number is a valid timestamp
             let sequence_number = if verify_sequence_no {
                 if let Some(seq_no) = message.seqno {
                     if seq_no.is_empty() {
@@ -338,8 +339,27 @@ impl Decoder for GossipsubCodec {
                         // proceed to the next message
                         continue;
                     } else {
-                        // valid sequence number
-                        Some(BigEndian::read_u64(&seq_no))
+                        // valid sequence number format, now check if it's within the last 2 minutes
+                        let timestamp = BigEndian::read_u64(&seq_no);
+                        let current_time = SystemTime::now()
+                            .duration_since(SystemTime::UNIX_EPOCH)
+                            .expect("Time went backwards")
+                            .as_secs();
+                        if current_time.saturating_sub(timestamp) > 120 { // 2 minutes = 120 seconds
+                            tracing::debug!("Sequence number timestamp is older than 2 minutes");
+                            let message = RawMessage {
+                                source: None,
+                                data: message.data.unwrap_or_default(),
+                                sequence_number: None,
+                                topic: TopicHash::from_raw(message.topic),
+                                signature: message.signature,
+                                key: message.key,
+                                validated: false,
+                            };
+                            invalid_messages.push((message, ValidationError::InvalidSequenceNumber));
+                            continue;
+                        }
+                        Some(timestamp)
                     }
                 } else {
                     // sequence number was not present

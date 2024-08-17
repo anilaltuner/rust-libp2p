@@ -2631,7 +2631,11 @@ where
                 inline_key,
                 last_seq_no,
             } => {
-                let sequence_number = last_seq_no.next();
+                let sequence_number = SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .expect("Time went backwards")
+                    .as_nanos() as u64;
+                *last_seq_no = SequenceNumber(sequence_number);
 
                 let signature = {
                     let message = proto::Message {
