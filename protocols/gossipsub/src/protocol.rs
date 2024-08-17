@@ -347,7 +347,7 @@ impl Decoder for GossipsubCodec {
                             .expect("Time went backwards")
                             .as_secs();
                         let diff = current_time.saturating_sub(timestamp.clone());
-                        tracing::debug!("Time difference: {} seconds", diff);
+                        tracing::warn!("Time difference: {} seconds", diff);
                         if diff > 30 { // Check if older than 30 seconds
                             tracing::warn!("Sequence number timestamp is older than 2 minutes");
                             let message = RawMessage {

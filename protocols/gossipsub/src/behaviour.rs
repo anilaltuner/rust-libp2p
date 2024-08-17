@@ -3110,7 +3110,6 @@ where
                         tracing::warn!("Received more messages than permitted. Ignoring further messages. Processed: {}", count);
                         break;
                     }
-                    tracing::warn!("Received message from peer: {:?}", raw_message.data);
                     self.handle_received_message(raw_message, &propagation_source);
                 }
 
