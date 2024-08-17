@@ -787,6 +787,18 @@ impl ConfigBuilder {
         self
     }
 
+    /// Time to live for messages in the cache. The default is 180 seconds.
+    pub fn message_ttl(&mut self, message_ttl: Duration) -> &mut Self {
+        self.config.message_ttl = message_ttl;
+        self
+    }
+
+    /// Maximum number of messages in the cache. The default is 500.
+    pub fn message_capacity(&mut self, message_capacity: usize) -> &mut Self {
+        self.config.message_capacity = message_capacity;
+        self
+    }
+
     /// Published message ids time cache duration. The default is 10 seconds.
     pub fn published_message_ids_cache_time(
         &mut self,
@@ -795,6 +807,7 @@ impl ConfigBuilder {
         self.config.published_message_ids_cache_time = published_message_ids_cache_time;
         self
     }
+
 
     /// Constructs a [`Config`] from the given configuration and validates the settings.
     pub fn build(&self) -> Result<Config, ConfigBuilderError> {
