@@ -37,6 +37,7 @@ sha2 = "0.10.8"
 smallvec = "1.13.2"
 tracing = { workspace = true }
 void = "1.0.2"
+lru_time_cache = "0.11.11"
 
 # Metrics dependencies
 prometheus-client = { workspace = true }

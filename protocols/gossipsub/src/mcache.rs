@@ -21,12 +21,13 @@
 use crate::topic::TopicHash;
 use crate::types::{MessageId, RawMessage};
 use libp2p_identity::PeerId;
-use std::collections::hash_map::Entry;
 use std::fmt::Debug;
 use std::{
     collections::{HashMap, HashSet},
     fmt,
+    time::Duration,
 };
+use lru_time_cache::LruCache;
 
 /// CacheEntry stored in the history.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -38,7 +39,7 @@ pub(crate) struct CacheEntry {
 /// MessageCache struct holding history of messages.
 #[derive(Clone)]
 pub(crate) struct MessageCache {
-    msgs: HashMap<MessageId, (RawMessage, HashSet<PeerId>)>,
+    msgs: LruCache<MessageId, (RawMessage, HashSet<PeerId>)>,
     /// For every message and peer the number of times this peer asked for the message
     iwant_counts: HashMap<MessageId, HashMap<PeerId, u32>>,
     history: Vec<Vec<CacheEntry>>,
@@ -60,10 +61,10 @@ impl fmt::Debug for MessageCache {
 
 /// Implementation of the MessageCache.
 impl MessageCache {
-    pub(crate) fn new(gossip: usize, history_capacity: usize) -> Self {
+    pub(crate) fn new(gossip: usize, history_capacity: usize, time_to_live: Duration, max_count: usize) -> Self {
         MessageCache {
             gossip,
-            msgs: HashMap::default(),
+            msgs: LruCache::with_expiry_duration_and_capacity(time_to_live, max_count),
             iwant_counts: HashMap::default(),
             history: vec![Vec::new(); history_capacity],
         }
@@ -73,22 +74,19 @@ impl MessageCache {
     ///
     /// Returns true if the message didn't already exist in the cache.
     pub(crate) fn put(&mut self, message_id: &MessageId, msg: RawMessage) -> bool {
-        match self.msgs.entry(message_id.clone()) {
-            Entry::Occupied(_) => {
-                // Don't add duplicate entries to the cache.
-                false
-            }
-            Entry::Vacant(entry) => {
-                let cache_entry = CacheEntry {
-                    mid: message_id.clone(),
-                    topic: msg.topic.clone(),
-                };
-                entry.insert((msg, HashSet::default()));
-                self.history[0].push(cache_entry);
+        if self.msgs.contains_key(message_id) {
+            // Don't add duplicate entries to the cache.
+            false
+        } else {
+            let cache_entry = CacheEntry {
+                mid: message_id.clone(),
+                topic: msg.topic.clone(),
+            };
+            self.msgs.insert(message_id.clone(), (msg, HashSet::default()));
+            self.history[0].push(cache_entry);
 
-                tracing::trace!(message=?message_id, "Put message in mcache");
-                true
-            }
+            tracing::trace!(message=?message_id, "Put message in mcache");
+            true
         }
     }
 
@@ -108,7 +106,7 @@ impl MessageCache {
     /// Get a message with `message_id`
     #[cfg(test)]
     pub(crate) fn get(&self, message_id: &MessageId) -> Option<&RawMessage> {
-        self.msgs.get(message_id).map(|(message, _)| message)
+        self.msgs.peek(message_id).map(|(message, _)| message)
     }
 
     /// Increases the iwant count for the given message by one and returns the message together
@@ -164,7 +162,7 @@ impl MessageCache {
                         if &entry.topic == topic {
                             let mid = &entry.mid;
                             // Only gossip validated messages
-                            if let Some(true) = self.msgs.get(mid).map(|(msg, _)| msg.validated) {
+                            if let Some(true) = self.msgs.peek(mid).map(|(msg, _)| msg.validated) {
                                 Some(mid.clone())
                             } else {
                                 None
@@ -250,7 +248,7 @@ mod tests {
     }
 
     fn new_cache(gossip_size: usize, history: usize) -> MessageCache {
-        MessageCache::new(gossip_size, history)
+        MessageCache::new(gossip_size, history, Duration::from_secs(60), 1000)
     }
 
     #[test]

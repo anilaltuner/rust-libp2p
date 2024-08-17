@@ -62,6 +62,8 @@ pub struct ProtocolConfig {
     pub(crate) max_transmit_size: usize,
     /// Determines the level of validation to be done on incoming messages.
     pub(crate) validation_mode: ValidationMode,
+    /// The time to live for a message in seconds
+    pub(crate) gossip_ttl: u64,
 }
 
 impl Default for ProtocolConfig {
@@ -70,6 +72,7 @@ impl Default for ProtocolConfig {
             max_transmit_size: 65536,
             validation_mode: ValidationMode::Strict,
             protocol_ids: vec![GOSSIPSUB_1_1_0_PROTOCOL, GOSSIPSUB_1_0_0_PROTOCOL],
+            gossip_ttl: 180,
         }
     }
 }
@@ -110,7 +113,7 @@ where
         Box::pin(future::ok((
             Framed::new(
                 socket,
-                GossipsubCodec::new(self.max_transmit_size, self.validation_mode),
+                GossipsubCodec::new(self.max_transmit_size, self.validation_mode, self.gossip_ttl),
             ),
             protocol_id.kind,
         )))
@@ -129,7 +132,7 @@ where
         Box::pin(future::ok((
             Framed::new(
                 socket,
-                GossipsubCodec::new(self.max_transmit_size, self.validation_mode),
+                GossipsubCodec::new(self.max_transmit_size, self.validation_mode, self.gossip_ttl),
             ),
             protocol_id.kind,
         )))
@@ -143,14 +146,17 @@ pub struct GossipsubCodec {
     validation_mode: ValidationMode,
     /// The codec to handle common encoding/decoding of protobuf messages
     codec: quick_protobuf_codec::Codec<proto::RPC>,
+    /// The time to live for a message in seconds
+    gossip_ttl: u64,
 }
 
 impl GossipsubCodec {
-    pub fn new(max_length: usize, validation_mode: ValidationMode) -> GossipsubCodec {
+    pub fn new(max_length: usize, validation_mode: ValidationMode, gossip_ttl: u64) -> GossipsubCodec {
         let codec = quick_protobuf_codec::Codec::new(max_length);
         GossipsubCodec {
             validation_mode,
             codec,
+            gossip_ttl
         }
     }
 
@@ -340,7 +346,6 @@ impl Decoder for GossipsubCodec {
                         // proceed to the next message
                         continue;
                     } else {
-                        // valid sequence number format, now check if it's within the last 2 minutes
                         let timestamp = BigEndian::read_u64(&seq_no);
                         let current_time = SystemTime::now()
                             .duration_since(SystemTime::UNIX_EPOCH)
@@ -351,8 +356,8 @@ impl Decoder for GossipsubCodec {
                         tracing::warn!("Time difference: {} seconds", diff_secs);
                         tracing::warn!("Current time: {}", current_time);
                         tracing::warn!("Timestamp: {}", timestamp);
-                        if diff_secs > 30 { // Check if older than 2 minutes
-                            tracing::warn!("Sequence number timestamp is older than 2 minutes");
+                        if diff_secs > self.gossip_ttl { 
+                            tracing::warn!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl);
                             let message = RawMessage {
                                 source: None,
                                 data: message.data.unwrap_or_default(),
@@ -593,7 +598,7 @@ mod tests {
                 control_msgs: vec![],
             };
 
-            let mut codec = GossipsubCodec::new(u32::MAX as usize, ValidationMode::Strict);
+            let mut codec = GossipsubCodec::new(u32::MAX as usize, ValidationMode::Strict, 30);
             let mut buf = BytesMut::new();
             codec.encode(rpc.into_protobuf(), &mut buf).unwrap();
             let decoded_rpc = codec.decode(&mut buf).unwrap().unwrap();

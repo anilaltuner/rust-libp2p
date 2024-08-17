@@ -95,6 +95,8 @@ pub struct Config {
     max_ihave_messages: usize,
     iwant_followup_time: Duration,
     published_message_ids_cache_time: Duration,
+    message_ttl: Duration,
+    message_capacity: usize,
 }
 
 impl Config {
@@ -350,6 +352,16 @@ impl Config {
     pub fn published_message_ids_cache_time(&self) -> Duration {
         self.published_message_ids_cache_time
     }
+    
+    /// Time to live for messages in the cache. The default is 180 seconds.
+    pub fn message_ttl(&self) -> Duration {
+        self.message_ttl
+    }
+
+    /// Maximum number of messages in the cache. The default is 500.
+    pub fn message_capacity(&self) -> usize {
+        self.message_capacity
+    }
 }
 
 impl Default for Config {
@@ -417,6 +429,8 @@ impl Default for ConfigBuilder {
                 max_ihave_messages: 10,
                 iwant_followup_time: Duration::from_secs(3),
                 published_message_ids_cache_time: Duration::from_secs(10),
+                message_ttl: Duration::from_secs(180),
+                message_capacity: 500,
             },
             invalid_protocol: false,
         }

@@ -455,7 +455,12 @@ where
                 config.heartbeat_interval(),
                 config.backoff_slack(),
             ),
-            mcache: MessageCache::new(config.history_gossip(), config.history_length()),
+            mcache: MessageCache::new(
+                config.history_gossip(),
+                config.history_length(),
+                config.message_ttl(),
+                config.message_capacity(),
+            ),
             heartbeat: Ticker::new_with_next(
                 config.heartbeat_interval(),
                 config.heartbeat_initial_delay(),
