@@ -316,7 +316,6 @@ impl Decoder for GossipsubCodec {
             }
 
             // ensure the sequence number is a valid timestamp
-            tracing::warn!("verifying sequence number");
             let sequence_number = if verify_sequence_no {
                 if let Some(seq_no) = message.seqno {
                     if seq_no.is_empty() {
@@ -341,14 +340,15 @@ impl Decoder for GossipsubCodec {
                         // proceed to the next message
                         continue;
                     } else {
-                        tracing::warn!("valid sequence number format, now check if it's within the last 2 minutes");
                         // valid sequence number format, now check if it's within the last 2 minutes
                         let timestamp = BigEndian::read_u64(&seq_no);
                         let current_time = SystemTime::now()
                             .duration_since(SystemTime::UNIX_EPOCH)
                             .expect("Time went backwards")
                             .as_secs();
-                        if current_time.saturating_sub(timestamp) > 120 { // 2 minutes = 120 seconds
+                        let diff = current_time.saturating_sub(timestamp.clone());
+                        tracing::debug!("Time difference: {} seconds", diff);
+                        if diff > 30 { // Check if older than 30 seconds
                             tracing::warn!("Sequence number timestamp is older than 2 minutes");
                             let message = RawMessage {
                                 source: None,
