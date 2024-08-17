@@ -353,9 +353,9 @@ impl Decoder for GossipsubCodec {
                             .as_nanos() as u64;
                         let diff = current_time.saturating_sub(timestamp);
                         let diff_secs = diff / 1_000_000_000; // Convert nanoseconds to seconds
-                        tracing::warn!("Time difference: {} seconds", diff_secs);
-                        tracing::warn!("Current time: {}", current_time);
-                        tracing::warn!("Timestamp: {}", timestamp);
+                        tracing::debug!("Time difference: {} seconds", diff_secs);
+                        tracing::debug!("Current time: {}", current_time);
+                        tracing::debug!("Timestamp: {}", timestamp);
                         if diff_secs > self.gossip_ttl { 
                             tracing::warn!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl);
                             let message = RawMessage {
