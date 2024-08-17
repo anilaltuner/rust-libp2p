@@ -52,7 +52,7 @@ pub(crate) struct MessageCache {
 impl fmt::Debug for MessageCache {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("MessageCache")
-            .field("msgs", &self.msgs)
+            .field("msgs", &format!("LruCache with {} entries", self.msgs.len()))
             .field("history", &self.history)
             .field("gossip", &self.gossip)
             .finish()
