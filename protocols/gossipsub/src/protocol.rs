@@ -345,12 +345,13 @@ impl Decoder for GossipsubCodec {
                         let current_time = SystemTime::now()
                             .duration_since(SystemTime::UNIX_EPOCH)
                             .expect("Time went backwards")
-                            .as_secs();
-                        let diff = current_time.saturating_sub(timestamp.clone());
-                        tracing::warn!("Time difference: {} seconds", diff);
+                            .as_nanos() as u64;
+                        let diff = current_time.saturating_sub(timestamp);
+                        let diff_secs = diff / 1_000_000_000; // Convert nanoseconds to seconds
+                        tracing::warn!("Time difference: {} seconds", diff_secs);
                         tracing::warn!("Current time: {}", current_time);
-                        tracing::warn!("Timestamp: {}", timestamp.clone());
-                        if diff > 30 { // Check if older than 30 seconds
+                        tracing::warn!("Timestamp: {}", timestamp);
+                        if diff_secs > 30 { // Check if older than 2 minutes
                             tracing::warn!("Sequence number timestamp is older than 2 minutes");
                             let message = RawMessage {
                                 source: None,
