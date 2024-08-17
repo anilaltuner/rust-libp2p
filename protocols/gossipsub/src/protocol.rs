@@ -316,12 +316,14 @@ impl Decoder for GossipsubCodec {
             }
 
             // ensure the sequence number is a valid timestamp
+            tracing::warn!("verifying sequence number");
             let sequence_number = if verify_sequence_no {
                 if let Some(seq_no) = message.seqno {
                     if seq_no.is_empty() {
+                        tracing::warn!("Sequence number is empty");
                         None
                     } else if seq_no.len() != 8 {
-                        tracing::debug!(
+                        tracing::warn!(
                             sequence_number=?seq_no,
                             sequence_length=%seq_no.len(),
                             "Invalid sequence number length for received message"
@@ -339,6 +341,7 @@ impl Decoder for GossipsubCodec {
                         // proceed to the next message
                         continue;
                     } else {
+                        tracing::warn!("valid sequence number format, now check if it's within the last 2 minutes");
                         // valid sequence number format, now check if it's within the last 2 minutes
                         let timestamp = BigEndian::read_u64(&seq_no);
                         let current_time = SystemTime::now()
@@ -346,7 +349,7 @@ impl Decoder for GossipsubCodec {
                             .expect("Time went backwards")
                             .as_secs();
                         if current_time.saturating_sub(timestamp) > 120 { // 2 minutes = 120 seconds
-                            tracing::debug!("Sequence number timestamp is older than 2 minutes");
+                            tracing::warn!("Sequence number timestamp is older than 2 minutes");
                             let message = RawMessage {
                                 source: None,
                                 data: message.data.unwrap_or_default(),
@@ -363,7 +366,7 @@ impl Decoder for GossipsubCodec {
                     }
                 } else {
                     // sequence number was not present
-                    tracing::debug!("Sequence number not present but expected");
+                    tracing::warn!("Sequence number not present but expected");
                     let message = RawMessage {
                         source: None, // don't bother inform the application
                         data: message.data.unwrap_or_default(),
