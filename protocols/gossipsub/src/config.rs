@@ -866,6 +866,8 @@ impl std::fmt::Debug for Config {
             "published_message_ids_cache_time",
             &self.published_message_ids_cache_time,
         );
+        let _ = builder.field("message_ttl", &self.message_ttl);
+        let _ = builder.field("message_capacity", &self.message_capacity);
         builder.finish()
     }
 }
