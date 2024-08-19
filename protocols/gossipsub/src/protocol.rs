@@ -506,6 +506,9 @@ impl Decoder for GossipsubCodec {
             control_msgs.extend(prune_msgs);
         }
 
+        tracing::warn!("Length of control messages: {}", control_msgs.len());
+        tracing::warn!("Length of invalid messages: {}", invalid_messages.len());
+        tracing::warn!("Length of messages: {}", messages.len());
         Ok(Some(HandlerEvent::Message {
             rpc: Rpc {
                 messages,
