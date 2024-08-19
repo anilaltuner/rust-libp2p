@@ -409,7 +409,10 @@ impl ConnectionHandler for Handler {
     fn on_behaviour_event(&mut self, message: HandlerIn) {
         match self {
             Handler::Enabled(handler) => match message {
-                HandlerIn::Message(m) => handler.send_queue.push(m.into_protobuf()),
+                HandlerIn::Message(m) => {
+                    tracing::warn!("Length of send queue: {}", handler.send_queue.len());
+                    handler.send_queue.push(m.into_protobuf());
+                }
                 HandlerIn::JoinedMesh => {
                     handler.in_mesh = true;
                 }

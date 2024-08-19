@@ -357,7 +357,7 @@ impl Decoder for GossipsubCodec {
                         tracing::debug!("Current time: {}", current_time);
                         tracing::debug!("Timestamp: {}", timestamp);
                         if diff_secs > self.gossip_ttl { 
-                            tracing::warn!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl);
+                            tracing::debug!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl);
                             let message = RawMessage {
                                 source: None,
                                 data: message.data.unwrap_or_default(),
