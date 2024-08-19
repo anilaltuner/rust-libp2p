@@ -97,6 +97,7 @@ pub struct Config {
     published_message_ids_cache_time: Duration,
     message_ttl: Duration,
     message_capacity: usize,
+    gossip_ttl: u64,
 }
 
 impl Config {
@@ -362,6 +363,12 @@ impl Config {
     pub fn message_capacity(&self) -> usize {
         self.message_capacity
     }
+
+    /// Time to check message's sequence number timestamp. If the timestamp is older than this value, the message is considered expired.
+    /// The default is 180 seconds.
+    pub fn gossip_ttl(&self) -> u64 {
+        self.protocol.gossip_ttl
+    }
 }
 
 impl Default for Config {
@@ -431,6 +438,7 @@ impl Default for ConfigBuilder {
                 published_message_ids_cache_time: Duration::from_secs(10),
                 message_ttl: Duration::from_secs(180),
                 message_capacity: 500,
+                gossip_ttl: 180,
             },
             invalid_protocol: false,
         }
@@ -799,6 +807,13 @@ impl ConfigBuilder {
         self
     }
 
+    /// Time to check message's sequence number timestamp. If the timestamp is older than this value, the message is considered expired.
+    /// The default is 180 seconds.
+    pub fn gossip_ttl(&mut self, gossip_ttl: u64) -> &mut Self {
+        self.config.protocol.gossip_ttl = gossip_ttl;
+        self
+    }
+
     /// Published message ids time cache duration. The default is 10 seconds.
     pub fn published_message_ids_cache_time(
         &mut self,
@@ -881,6 +896,7 @@ impl std::fmt::Debug for Config {
         );
         let _ = builder.field("message_ttl", &self.message_ttl);
         let _ = builder.field("message_capacity", &self.message_capacity);
+        let _ = builder.field("gossip_ttl", &self.protocol.gossip_ttl);
         builder.finish()
     }
 }
