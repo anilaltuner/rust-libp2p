@@ -3097,7 +3097,7 @@ where
                 } else {
                     // log the invalid messages
                     for (message, validation_error) in invalid_messages {
-                        tracing::warn!(
+                        tracing::debug!(
                             peer=%propagation_source,
                             source=?message.source,
                             "Invalid message from peer. Reason: {:?}",
