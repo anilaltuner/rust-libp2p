@@ -22,6 +22,7 @@ use crate::config::ValidationMode;
 use crate::handler::HandlerEvent;
 use crate::rpc_proto::proto;
 use crate::topic::TopicHash;
+use std::time::Duration;
 use crate::types::{
     ControlAction, MessageId, PeerInfo, PeerKind, RawMessage, Rpc, Subscription, SubscriptionAction,
 };
@@ -63,7 +64,7 @@ pub struct ProtocolConfig {
     /// Determines the level of validation to be done on incoming messages.
     pub(crate) validation_mode: ValidationMode,
     /// The time to live for a message in seconds
-    pub(crate) gossip_ttl: u64,
+    pub(crate) gossip_ttl: Duration,
 }
 
 impl Default for ProtocolConfig {
@@ -72,7 +73,7 @@ impl Default for ProtocolConfig {
             max_transmit_size: 65536,
             validation_mode: ValidationMode::Strict,
             protocol_ids: vec![GOSSIPSUB_1_1_0_PROTOCOL, GOSSIPSUB_1_0_0_PROTOCOL],
-            gossip_ttl: 180,
+            gossip_ttl: Duration::from_secs(180),
         }
     }
 }
@@ -147,11 +148,11 @@ pub struct GossipsubCodec {
     /// The codec to handle common encoding/decoding of protobuf messages
     codec: quick_protobuf_codec::Codec<proto::RPC>,
     /// The time to live for a message in seconds
-    gossip_ttl: u64,
+    gossip_ttl: Duration,
 }
 
 impl GossipsubCodec {
-    pub fn new(max_length: usize, validation_mode: ValidationMode, gossip_ttl: u64) -> GossipsubCodec {
+    pub fn new(max_length: usize, validation_mode: ValidationMode, gossip_ttl: Duration) -> GossipsubCodec {
         let codec = quick_protobuf_codec::Codec::new(max_length);
         GossipsubCodec {
             validation_mode,
@@ -337,8 +338,8 @@ impl Decoder for GossipsubCodec {
                         tracing::debug!("Time difference: {} seconds", diff_secs);
                         tracing::debug!("Current time: {}", current_time);
                         tracing::debug!("Timestamp: {}", timestamp);
-                        if diff_secs > self.gossip_ttl {
-                            tracing::debug!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl);
+                        if diff_secs > self.gossip_ttl.as_secs() {
+                            tracing::debug!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl.as_secs());
                             let message = RawMessage {
                                 source: None,
                                 data: message.data.unwrap_or_default(),
@@ -600,7 +601,7 @@ mod tests {
                 control_msgs: vec![],
             };
 
-            let mut codec = GossipsubCodec::new(u32::MAX as usize, ValidationMode::Strict, 30);
+            let mut codec = GossipsubCodec::new(u32::MAX as usize, ValidationMode::Strict, Duration::from_secs(30));
             let mut buf = BytesMut::new();
             codec.encode(rpc.into_protobuf(), &mut buf).unwrap();
             let decoded_rpc = codec.decode(&mut buf).unwrap().unwrap();

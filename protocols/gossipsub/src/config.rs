@@ -97,7 +97,7 @@ pub struct Config {
     published_message_ids_cache_time: Duration,
     message_ttl: Duration,
     message_capacity: usize,
-    gossip_ttl: u64,
+    gossip_ttl: Duration,
 }
 
 impl Config {
@@ -366,7 +366,7 @@ impl Config {
 
     /// Time to check message's sequence number timestamp. If the timestamp is older than this value, the message is considered expired.
     /// The default is 180 seconds.
-    pub fn gossip_ttl(&self) -> u64 {
+    pub fn gossip_ttl(&self) -> Duration {
         self.protocol.gossip_ttl
     }
 }
@@ -438,7 +438,7 @@ impl Default for ConfigBuilder {
                 published_message_ids_cache_time: Duration::from_secs(10),
                 message_ttl: Duration::from_secs(180),
                 message_capacity: 500,
-                gossip_ttl: 180,
+                gossip_ttl: Duration::from_secs(180),
             },
             invalid_protocol: false,
         }
@@ -809,7 +809,7 @@ impl ConfigBuilder {
 
     /// Time to check message's sequence number timestamp. If the timestamp is older than this value, the message is considered expired.
     /// The default is 180 seconds.
-    pub fn gossip_ttl(&mut self, gossip_ttl: u64) -> &mut Self {
+    pub fn gossip_ttl(&mut self, gossip_ttl: Duration) -> &mut Self {
         self.config.protocol.gossip_ttl = gossip_ttl;
         self
     }
