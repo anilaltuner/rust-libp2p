@@ -301,25 +301,6 @@ impl Decoder for GossipsubCodec {
                 continue;
             }
 
-            // verify message signatures if required
-            if verify_signature && !GossipsubCodec::verify_signature(&message) {
-                tracing::warn!("Invalid signature for received message");
-
-                // Build the invalid message (ignoring further validation of sequence number
-                // and source)
-                let message = RawMessage {
-                    source: None, // don't bother inform the application
-                    data: message.data.unwrap_or_default(),
-                    sequence_number: None, // don't inform the application
-                    topic: TopicHash::from_raw(message.topic),
-                    signature: None, // don't inform the application
-                    key: message.key,
-                    validated: false,
-                };
-                invalid_messages.push((message, ValidationError::InvalidSignature));
-                // proceed to the next message
-                continue;
-            }
 
             // ensure the sequence number is a valid timestamp
             let sequence_number = if verify_sequence_no {
@@ -356,7 +337,7 @@ impl Decoder for GossipsubCodec {
                         tracing::debug!("Time difference: {} seconds", diff_secs);
                         tracing::debug!("Current time: {}", current_time);
                         tracing::debug!("Timestamp: {}", timestamp);
-                        if diff_secs > self.gossip_ttl { 
+                        if diff_secs > self.gossip_ttl {
                             tracing::debug!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl);
                             let message = RawMessage {
                                 source: None,
@@ -391,6 +372,27 @@ impl Decoder for GossipsubCodec {
                 // Do not verify the sequence number, consider it empty
                 None
             };
+
+            // verify message signatures if required
+            if verify_signature && !GossipsubCodec::verify_signature(&message) {
+                tracing::warn!("Invalid signature for received message");
+
+                // Build the invalid message (ignoring further validation of sequence number
+                // and source)
+                let message = RawMessage {
+                    source: None, // don't bother inform the application
+                    data: message.data.unwrap_or_default(),
+                    sequence_number: None, // don't inform the application
+                    topic: TopicHash::from_raw(message.topic),
+                    signature: None, // don't inform the application
+                    key: message.key,
+                    validated: false,
+                };
+                invalid_messages.push((message, ValidationError::InvalidSignature));
+                // proceed to the next message
+                continue;
+            }
+
 
             // Verify the message source if required
             let source = if verify_source {
@@ -506,9 +508,6 @@ impl Decoder for GossipsubCodec {
             control_msgs.extend(prune_msgs);
         }
 
-        tracing::warn!("Length of control messages: {}", control_msgs.len());
-        tracing::warn!("Length of invalid messages: {}", invalid_messages.len());
-        tracing::warn!("Length of messages: {}", messages.len());
         Ok(Some(HandlerEvent::Message {
             rpc: Rpc {
                 messages,
