@@ -85,8 +85,6 @@ impl MessageCache {
             self.msgs.insert(message_id.clone(), (msg, HashSet::default()));
             self.history[0].push(cache_entry);
 
-            tracing::trace!(message=?message_id, "Put message in mcache");
-            tracing::warn!("The size of the cache is {}", self.msgs.len());
             true
         }
     }

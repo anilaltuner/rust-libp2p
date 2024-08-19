@@ -546,8 +546,6 @@ fn proto_to_resp_msg(message: proto::Message) -> Result<KadResponseMsg, io::Erro
             let rec = message
                 .record
                 .ok_or_else(|| invalid_data("received PutValue message with no record"))?;
-            tracing::warn!("Received PutValue message with record: {:?}", rec);
-            tracing::warn!("Key: {:?}", key);
             Ok(KadResponseMsg::PutValue {
                 key,
                 value: rec.value,
