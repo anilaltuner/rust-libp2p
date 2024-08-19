@@ -833,8 +833,6 @@ where
         quorum: Quorum,
     ) -> Result<QueryId, store::Error> {
         record.publisher = Some(*self.kbuckets.local_key().preimage());
-        tracing::warn!("Putting record for key: {:?}", record.key);
-        tracing::warn!("Value of record: {:?}", record.value);
         self.store.put(record.clone())?;
         record.expires = record
             .expires
