@@ -1753,12 +1753,7 @@ where
         // Dispatch the message to the user if we are subscribed to any of the topics
         if self.mesh.contains_key(&message.topic) {
             tracing::debug!("Sending received message to user");
-            self.events
-                .push_back(ToSwarm::GenerateEvent(Event::Message {
-                    propagation_source: *propagation_source,
-                    message_id: msg_id.clone(),
-                    message,
-                }));
+        
         } else {
             tracing::debug!(
                 topic=%message.topic,
