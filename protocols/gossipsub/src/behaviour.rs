@@ -1723,7 +1723,7 @@ where
         }
 
         if !self.duplicate_cache.insert(msg_id.clone()) {
-            tracing::debug!(message=%msg_id, "Message already received, ignoring");
+            tracing::warn!(message=%msg_id, "Message already received, ignoring");
             if let Some((peer_score, ..)) = &mut self.peer_score {
                 peer_score.duplicated_message(propagation_source, &msg_id, &message.topic);
             }
