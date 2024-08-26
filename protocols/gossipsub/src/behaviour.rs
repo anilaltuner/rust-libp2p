@@ -1697,8 +1697,6 @@ where
             metrics.msg_recvd_unfiltered(&raw_message.topic, raw_message.raw_protobuf_len());
         }
 
-        return;
-
         // Try and perform the data transform to the message. If it fails, consider it invalid.
         let message = match self.data_transform.inbound_transform(raw_message.clone()) {
             Ok(message) => message,
@@ -1755,7 +1753,12 @@ where
         // Dispatch the message to the user if we are subscribed to any of the topics
         if self.mesh.contains_key(&message.topic) {
             tracing::debug!("Sending received message to user");
-        
+            self.events
+                .push_back(ToSwarm::GenerateEvent(Event::Message {
+                    propagation_source: *propagation_source,
+                    message_id: msg_id.clone(),
+                    message,
+                }));
         } else {
             tracing::debug!(
                 topic=%message.topic,
@@ -2606,9 +2609,19 @@ where
         }
 
         // forward the message to peers
-        // recipient_peers is always empty, so we don't need to check or iterate
-        tracing::debug!("No peers to forward message to");
-        Ok(false)
+        if !recipient_peers.is_empty() {
+            let event = RpcOut::Forward(message.clone());
+
+            for peer in recipient_peers.iter() {
+                tracing::warn!(%peer, message=%msg_id, "Sending message to peer");
+                self.send_message(*peer, event.clone());
+            }
+            tracing::debug!("Completed forwarding message");
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+
     }
 
     /// Constructs a [`RawMessage`] performing message signing if required.
