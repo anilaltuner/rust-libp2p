@@ -1697,6 +1697,8 @@ where
             metrics.msg_recvd_unfiltered(&raw_message.topic, raw_message.raw_protobuf_len());
         }
 
+        return;
+
         // Try and perform the data transform to the message. If it fails, consider it invalid.
         let message = match self.data_transform.inbound_transform(raw_message.clone()) {
             Ok(message) => message,
