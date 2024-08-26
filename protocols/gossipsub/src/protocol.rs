@@ -250,7 +250,7 @@ impl Decoder for GossipsubCodec {
             match self.validation_mode {
                 ValidationMode::Strict => {
                     // Validate everything
-                    verify_signature = true;
+                    verify_signature = false;
                     verify_sequence_no = true;
                     verify_source = true;
                 }
