@@ -2610,8 +2610,14 @@ where
 
         // forward the message to peers
         if !recipient_peers.is_empty() {
-            tracing::debug!("No recipients for message");
-            Ok(false)
+            let event = RpcOut::Forward(message.clone());
+
+            for peer in recipient_peers.iter() {
+                tracing::warn!(%peer, message=%msg_id, "Sending message to peer");
+                self.send_message(*peer, event.clone());
+            }
+            tracing::debug!("Completed forwarding message");
+            Ok(true)
         } else {
             Ok(false)
         }
