@@ -257,7 +257,7 @@ impl Decoder for GossipsubCodec {
                 ValidationMode::Permissive => {
                     // If the fields exist, validate them
                     if message.signature.is_some() {
-                        verify_signature = true;
+                        verify_signature = false;
                     }
                     if message.seqno.is_some() {
                         verify_sequence_no = true;
