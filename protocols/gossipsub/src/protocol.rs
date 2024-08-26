@@ -305,7 +305,7 @@ impl Decoder for GossipsubCodec {
 
             // ensure the sequence number is a valid timestamp
             let sequence_number = if verify_sequence_no {
-                if let Some(seq_no) = message.clone().seqno {
+                if let Some(seq_no) = &message.seqno {
                     if seq_no.is_empty() {
                         tracing::warn!("Sequence number is empty");
                         None
