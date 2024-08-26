@@ -1723,7 +1723,7 @@ where
         }
 
         if !self.duplicate_cache.insert(msg_id.clone()) {
-            tracing::warn!(message=%msg_id, "Message already received, ignoring");
+            tracing::debug!(message=%msg_id, "Message already received, ignoring");
             if let Some((peer_score, ..)) = &mut self.peer_score {
                 peer_score.duplicated_message(propagation_source, &msg_id, &message.topic);
             }
@@ -2604,18 +2604,9 @@ where
         }
 
         // forward the message to peers
-        if !recipient_peers.is_empty() {
-            let event = RpcOut::Forward(message.clone());
-
-            for peer in recipient_peers.iter() {
-                tracing::warn!(%peer, message=%msg_id, "Sending message to peer");
-                self.send_message(*peer, event.clone());
-            }
-            tracing::debug!("Completed forwarding message");
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        // recipient_peers is always empty, so we don't need to check or iterate
+        tracing::debug!("No peers to forward message to");
+        Ok(false)
     }
 
     /// Constructs a [`RawMessage`] performing message signing if required.
