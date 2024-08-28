@@ -410,6 +410,12 @@ impl ConnectionHandler for Handler {
         match self {
             Handler::Enabled(handler) => match message {
                 HandlerIn::Message(m) => {
+                    const MAX_QUEUE_SIZE: usize = 200; // Adjust this value as needed
+                    if handler.send_queue.len() >= MAX_QUEUE_SIZE {
+                        // Front drop: remove the oldest message
+                        // handler.send_queue.remove(0);
+                        tracing::warn!("Send queue full");
+                    }
                     tracing::warn!("Send queue length: {}", handler.send_queue.len());
                     handler.send_queue.push(m.into_protobuf());
                 }
