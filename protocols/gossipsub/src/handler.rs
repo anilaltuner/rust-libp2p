@@ -416,8 +416,10 @@ impl ConnectionHandler for Handler {
                         // handler.send_queue.remove(0);
                         tracing::warn!("Send queue full");
                     }
+                    else {
                     tracing::warn!("Send queue length: {}", handler.send_queue.len());
                     handler.send_queue.push(m.into_protobuf());
+                }
                 }
                 HandlerIn::JoinedMesh => {
                     handler.in_mesh = true;
