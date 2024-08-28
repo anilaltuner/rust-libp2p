@@ -410,6 +410,7 @@ impl ConnectionHandler for Handler {
         match self {
             Handler::Enabled(handler) => match message {
                 HandlerIn::Message(m) => {
+                    tracing::warn!("Send queue length: {}", handler.send_queue.len());
                     handler.send_queue.push(m.into_protobuf());
                 }
                 HandlerIn::JoinedMesh => {
