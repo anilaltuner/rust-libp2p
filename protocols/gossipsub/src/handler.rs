@@ -409,8 +409,8 @@ impl ConnectionHandler for Handler {
         match self {
             Handler::Enabled(handler) => match message {
                 HandlerIn::Message(m) => {
-                    const MAX_QUEUE_SIZE: usize = 200;
-                    if handler.send_queue.len() < MAX_QUEUE_SIZE {
+                    let max_queue_size: usize = handler.listen_protocol.send_queue_size;
+                    if handler.send_queue.len() < max_queue_size {
                         if !matches!(m, RpcOut::Forward(_)) {
                             tracing::debug!("Send queue length: {}", handler.send_queue.len());
                             handler.send_queue.push(m.into_protobuf());

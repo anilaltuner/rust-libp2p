@@ -65,6 +65,8 @@ pub struct ProtocolConfig {
     pub(crate) validation_mode: ValidationMode,
     /// The time to live for a message in seconds
     pub(crate) gossip_ttl: Duration,
+    /// Send queue boundary size
+    pub(crate) send_queue_size: usize,
 }
 
 impl Default for ProtocolConfig {
@@ -74,6 +76,7 @@ impl Default for ProtocolConfig {
             validation_mode: ValidationMode::Strict,
             protocol_ids: vec![GOSSIPSUB_1_1_0_PROTOCOL, GOSSIPSUB_1_0_0_PROTOCOL],
             gossip_ttl: Duration::from_secs(180),
+            send_queue_size: 256,
         }
     }
 }
