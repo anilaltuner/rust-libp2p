@@ -2613,7 +2613,6 @@ where
             let event = RpcOut::Forward(message.clone());
 
             for peer in recipient_peers.iter() {
-                tracing::warn!(%peer, message=%msg_id, "Sending message to peer");
                 self.send_message(*peer, event.clone());
             }
             tracing::debug!("Completed forwarding message");
