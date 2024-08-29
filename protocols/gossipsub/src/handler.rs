@@ -416,7 +416,7 @@ impl ConnectionHandler for Handler {
                             handler.send_queue.push(m.into_protobuf());
                         }
                     } else {
-                        tracing::warn!("Send queue full, dropping message");
+                        tracing::debug!("Send queue full, dropping message");
                     }
                 }
                 HandlerIn::JoinedMesh => {
