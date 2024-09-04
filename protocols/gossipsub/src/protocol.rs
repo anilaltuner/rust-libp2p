@@ -244,6 +244,9 @@ impl Decoder for GossipsubCodec {
         let mut invalid_messages = Vec::new();
 
         for message in rpc.publish.into_iter() {
+            if message.topic == "results" {
+                tracing::warn!("Received message with topic: {:?}, {:?}", message.from, message.seqno);
+            }
             // Keep track of the type of invalid message.
             let mut invalid_kind = None;
             let mut verify_signature = false;
