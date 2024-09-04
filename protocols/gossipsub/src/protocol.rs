@@ -321,9 +321,7 @@ impl Decoder for GossipsubCodec {
                             sequence_length=%seq_no.len(),
                             "Invalid sequence number length for received message"
                         );
-                        if message.topic == "results" {
-                            tracing::warn!("Sequence number is invalid");
-                        }
+
                         let message = RawMessage {
                             source: None, // don't bother inform the application
                             data: message.data.unwrap_or_default(),
@@ -337,34 +335,7 @@ impl Decoder for GossipsubCodec {
                         // proceed to the next message
                         continue;
                     } else {
-                        let timestamp = BigEndian::read_u64(&seq_no);
-                        let current_time = SystemTime::now()
-                            .duration_since(SystemTime::UNIX_EPOCH)
-                            .expect("Time went backwards")
-                            .as_nanos() as u64;
-                        let diff = current_time.saturating_sub(timestamp);
-                        let diff_secs = diff / 1_000_000_000; // Convert nanoseconds to seconds
-                        tracing::debug!("Time difference: {} seconds", diff_secs);
-                        tracing::debug!("Current time: {}", current_time);
-                        tracing::debug!("Timestamp: {}", timestamp);
-                        if diff_secs > self.gossip_ttl.as_secs() {
-                            if message.topic == "results" {
-                                tracing::warn!("Sequence number is invalid - timestamp is older than {0} seconds", self.gossip_ttl.as_secs());
-                            }
-                            tracing::debug!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl.as_secs());
-                            let message = RawMessage {
-                                source: None,
-                                data: message.data.unwrap_or_default(),
-                                sequence_number: None,
-                                topic: TopicHash::from_raw(message.topic),
-                                signature: message.signature,
-                                key: message.key,
-                                validated: false,
-                            };
-                            invalid_messages.push((message, ValidationError::InvalidSequenceNumber));
-                            continue;
-                        }
-                        Some(timestamp)
+                        Some(BigEndian::read_u64(&seq_no))
                     }
                 } else {
                     // sequence number was not present

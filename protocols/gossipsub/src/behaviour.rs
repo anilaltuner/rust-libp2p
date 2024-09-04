@@ -1721,9 +1721,6 @@ where
         if !self.message_is_valid(&msg_id, &mut raw_message, propagation_source) {
             return;
         }
-        if message.topic == TopicHash::from_raw("results") {
-            tracing::warn!("{:?} is valid", msg_id);
-        }
 
         if !self.duplicate_cache.insert(msg_id.clone()) {
             tracing::debug!(message=%msg_id, "Message already received, ignoring");
@@ -3100,9 +3097,6 @@ where
                 } else {
                     // log the invalid messages
                     for (message, validation_error) in invalid_messages {
-                        if message.topic == TopicHash::from_raw("results") {
-                            tracing::warn!("{:?} is invalid", message.sequence_number);
-                        }
                         tracing::debug!(
                             peer=%propagation_source,
                             source=?message.source,
