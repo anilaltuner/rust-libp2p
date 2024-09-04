@@ -321,6 +321,9 @@ impl Decoder for GossipsubCodec {
                             sequence_length=%seq_no.len(),
                             "Invalid sequence number length for received message"
                         );
+                        if message.topic == "results" {
+                            tracing::warn!("Sequence number is invalid");
+                        }
                         let message = RawMessage {
                             source: None, // don't bother inform the application
                             data: message.data.unwrap_or_default(),
@@ -345,6 +348,9 @@ impl Decoder for GossipsubCodec {
                         tracing::debug!("Current time: {}", current_time);
                         tracing::debug!("Timestamp: {}", timestamp);
                         if diff_secs > self.gossip_ttl.as_secs() {
+                            if message.topic == "results" {
+                                tracing::warn!("Sequence number is invalid - timestamp is older than {0} seconds", self.gossip_ttl.as_secs());
+                            }
                             tracing::debug!("Sequence number timestamp is older than {0} seconds", self.gossip_ttl.as_secs());
                             let message = RawMessage {
                                 source: None,
@@ -409,7 +415,7 @@ impl Decoder for GossipsubCodec {
                             Ok(peer_id) => Some(peer_id), // valid peer id
                             Err(_) => {
                                 // invalid peer id, add to invalid messages
-                                tracing::debug!("Message source has an invalid PeerId");
+                                tracing::warn!("Message source has an invalid PeerId");
                                 let message = RawMessage {
                                     source: None, // don't bother inform the application
                                     data: message.data.unwrap_or_default(),
