@@ -717,6 +717,7 @@ where
             }
         }
 
+        tracing::warn!(recipient_peer_count = recipient_peers.len(), "Number of recipient peers");
         // Send to peers we know are subscribed to the topic.
         for peer_id in recipient_peers.iter() {
             tracing::trace!(peer=%peer_id, "Sending message to peer");
