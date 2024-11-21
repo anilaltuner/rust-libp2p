@@ -419,7 +419,7 @@ impl ConnectionHandler for Handler {
                             RpcOut::Control(_) => "Control",
                         });
                         if matches!(m, RpcOut::Publish(_)) {
-                            handler.send_queue.insert(0, m.into_protobuf());
+                            handler.send_queue.insert(0, m.clone().into_protobuf());
                         }
                         if !matches!(m.clone(), RpcOut::Forward(_)) {
                             tracing::debug!("Send queue length: {}", handler.send_queue.len());
