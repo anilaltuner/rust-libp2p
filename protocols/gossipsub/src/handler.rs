@@ -419,10 +419,6 @@ impl ConnectionHandler for Handler {
                             handler.send_queue.push(m.into_protobuf());
                         }
                     } else {
-                        if matches!(m.clone(), RpcOut::Publish(_)) {
-                            tracing::warn!("Publishing: {}", handler.send_queue.len());
-                            handler.send_queue.insert(m.into_protobuf());
-                        }
                         tracing::debug!("Send queue full, dropping message");
                     }
                 }
