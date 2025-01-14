@@ -83,7 +83,6 @@ mod codec {
         type Protocol = StreamProtocol;
         type Request = Req;
         type Response = Resp;
-
         async fn read_request<T>(&mut self, _: &Self::Protocol, io: &mut T) -> io::Result<Req>
         where
             T: AsyncRead + Unpin + Send,
@@ -91,6 +90,8 @@ mod codec {
             let mut vec = Vec::new();
 
             io.take(REQUEST_SIZE_MAXIMUM).read_to_end(&mut vec).await?;
+            
+            tracing::warn!("Read {} bytes from request", vec.len());
 
             cbor4ii::serde::from_slice(vec.as_slice()).map_err(decode_into_io_error)
         }
