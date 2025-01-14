@@ -411,9 +411,6 @@ impl ConnectionHandler for Handler {
                 HandlerIn::Message(m) => {
                     let max_queue_size: usize = handler.listen_protocol.send_queue_size;
                     if handler.send_queue.len() < max_queue_size {
-                        if matches!(m.clone(), RpcOut::Publish(_)){
-                            tracing::warn!("Publishing");
-                            }
                         if !matches!(m.clone(), RpcOut::Forward(_)) {
                             tracing::debug!("Send queue length: {}", handler.send_queue.len());
                             handler.send_queue.push(m.into_protobuf());
